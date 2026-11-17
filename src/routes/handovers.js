@@ -210,7 +210,9 @@ r.delete('/:id/attachments/:fileId', ah(async (req, res) => {
   if (!att) return res.status(404).json({ error: 'Attachment not found' });
   await fileBucket().delete(new mongoose.Types.ObjectId(att.fileId)).catch(() => {});
   h.attachments = h.attachments.filter((a) => a.fileId !== req.params.fileId);
+  h.lastActor = actorOf(req.user);
   await h.save();
+  await logActivity(HO, h, { type: 'attachment', message: `Removed attachment: ${att.filename}`, by: actorOf(req.user) });
   res.json({ handover: h.toJSON() });
 }));
 
