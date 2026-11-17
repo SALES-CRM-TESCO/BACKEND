@@ -40,12 +40,15 @@ function readBody(b) {
     design3D: !!sc.design3D, design2D: !!sc.design2D,
     transportationClientScope: yesNo(sc.transportationClientScope), scaffoldingClientScope: yesNo(sc.scaffoldingClientScope),
   };
+  const PRIORITIES = ['Low', 'Medium', 'High', 'Urgent'];
+  const priority = PRIORITIES.includes(clean(b?.priority)) ? clean(b.priority) : 'Medium';
   return {
     details, scope,
     timeline: { tentativeStartDate: clean(tl.tentativeStartDate), tentativeCompletionDate: clean(tl.tentativeCompletionDate), leadTimePromised: clean(tl.leadTimePromised) },
     pricing: { quotedPrice, milestones },
     siteVisitCompleted: !!b?.siteVisitCompleted,
     declarationAccepted: !!b?.declarationAccepted,
+    priority,
     // summary mirrors for lists & dashboards
     clientName: details.clientName,
     projectName: scope.typeOfProject || details.projectLocation,

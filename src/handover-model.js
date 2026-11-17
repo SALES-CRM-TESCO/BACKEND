@@ -44,6 +44,7 @@ export function handoverModels(prefix = 'ho_') {
     clientName: String,
     projectName: String,
     projectValue: { type: Number, default: 0 },
+    priority: { type: String, default: 'Medium' }, // set by Sales on the form; carried onto the Execution project
 
     // Section 1 — Client & Project Details
     details: {
