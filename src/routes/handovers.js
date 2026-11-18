@@ -18,6 +18,8 @@ const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 25 
 const isHead = (u) => u.role === ROLES.HEAD;
 const owns = (h, u) => (h.createdBy && h.createdBy.id === u._id) || isHead(u);
 const EDITABLE = ['Draft', 'Changes Requested'];
+// Sales can also correct a handover AFTER it has been submitted (add forgotten details/attachments).
+const UPDATABLE = ['Draft', 'Changes Requested', 'Submitted', 'Under Review'];
 
 // Build the handover document body from the request (shared by create + update).
 function readBody(b) {
@@ -37,6 +39,7 @@ function readBody(b) {
   };
   const scope = {
     typeOfProject: clean(sc.typeOfProject), projectSizeArea: clean(sc.projectSizeArea),
+    length: n(sc.length), width: n(sc.width), unit: (clean(sc.unit) || 'ft'),
     design3D: !!sc.design3D, design2D: !!sc.design2D,
     transportationClientScope: yesNo(sc.transportationClientScope), scaffoldingClientScope: yesNo(sc.scaffoldingClientScope),
   };
@@ -108,16 +111,20 @@ r.get('/:id', ah(async (req, res) => {
   res.json({ handover: h.toJSON(), activity: activity.map((a) => a.toJSON()) });
 }));
 
-// ---- Update (only Draft / Changes Requested) ----
+// ---- Update (Draft / Changes Requested, and corrections after Submitted) ----
 r.put('/:id', ah(async (req, res) => {
   const h = await Handover.findById(req.params.id);
   if (!h) return res.status(404).json({ error: 'Handover not found' });
   if (!owns(h, req.user)) return res.status(403).json({ error: 'You can only edit your own handovers' });
-  if (!EDITABLE.includes(h.status)) return res.status(400).json({ error: `A handover that is "${h.status}" cannot be edited` });
+  if (!UPDATABLE.includes(h.status)) return res.status(400).json({ error: `A handover that is "${h.status}" can no longer be edited` });
+  const wasSent = ['Submitted', 'Under Review'].includes(h.status);
   Object.assign(h, readBody(req.body));
+  if (wasSent) h.status = 'Submitted'; // keep it with Execution (never silently reverts to Draft)
   h.lastActor = actorOf(req.user);
   await h.save();
-  await logActivity(HO, h, { type: 'updated', message: 'Handover details updated', by: actorOf(req.user) });
+  await logActivity(HO, h, { type: 'updated', message: wasSent ? 'Handover updated after submission' : 'Handover details updated', by: actorOf(req.user) });
+  // Tell Execution the already-submitted handover changed.
+  if (wasSent && h.ref) await notifyExecution(h, { type: 'handover', title: `Handover ${h.ref} updated`, message: `${h.projectName || h.clientName || 'Project'} — details revised by ${req.user.name}` });
   res.json({ handover: h.toJSON() });
 }));
 
@@ -170,7 +177,7 @@ r.post('/:id/attachments', upload.array('files', 20), ah(async (req, res) => {
   const h = await Handover.findById(req.params.id);
   if (!h) return res.status(404).json({ error: 'Handover not found' });
   if (!owns(h, req.user)) return res.status(403).json({ error: 'Not allowed' });
-  if (!EDITABLE.includes(h.status)) return res.status(400).json({ error: `Attachments can only be changed while the handover is a Draft or has Changes Requested` });
+  if (!UPDATABLE.includes(h.status)) return res.status(400).json({ error: `Attachments can no longer be changed once the handover is "${h.status}"` });
   const files = req.files || [];
   if (!files.length) return res.status(400).json({ error: 'No files received' });
   const bad = files.find((f) => !attachmentAllowed(f));
@@ -208,7 +215,7 @@ r.delete('/:id/attachments/:fileId', ah(async (req, res) => {
   const h = await Handover.findById(req.params.id);
   if (!h) return res.status(404).json({ error: 'Handover not found' });
   if (!owns(h, req.user)) return res.status(403).json({ error: 'Not allowed' });
-  if (!EDITABLE.includes(h.status)) return res.status(400).json({ error: 'Attachments can only be changed while editable' });
+  if (!UPDATABLE.includes(h.status)) return res.status(400).json({ error: 'Attachments can no longer be changed' });
   const att = (h.attachments || []).find((a) => a.fileId === req.params.fileId);
   if (!att) return res.status(404).json({ error: 'Attachment not found' });
   await fileBucket().delete(new mongoose.Types.ObjectId(att.fileId)).catch(() => {});

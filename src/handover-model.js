@@ -67,6 +67,9 @@ export function handoverModels(prefix = 'ho_') {
     scope: {
       typeOfProject: String,
       projectSizeArea: String,
+      length: { type: Number, default: 0 },   // measurement, in `unit`
+      width: { type: Number, default: 0 },
+      unit: { type: String, default: 'ft' },  // ft | m
       design3D: { type: Boolean, default: false },
       design2D: { type: Boolean, default: false },
       transportationClientScope: { type: String, default: 'Yes' }, // 'Yes' | 'No'
@@ -89,6 +92,14 @@ export function handoverModels(prefix = 'ho_') {
     declarationAccepted: { type: Boolean, default: false },
 
     attachments: [attachmentSchema],
+
+    // Read-only snapshot of the Execution daily tasks, written by the Execution Portal so the
+    // Sales team can see task progress on the handover without querying Execution's users.
+    executionTasks: [{
+      _id: false,
+      taskId: String, title: String, status: String,
+      assigneeName: String, dueDate: String, updatedAt: Date,
+    }],
 
     createdBy: actorSchema,
     reviewedBy: actorSchema,
