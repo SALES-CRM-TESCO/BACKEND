@@ -35,7 +35,7 @@ function readBody(b) {
     contactDetails: clean(d.contactDetails), billingName: clean(d.billingName), mobileNumber: clean(d.mobileNumber),
     alternateMobile: clean(d.alternateMobile), siteAddress: clean(d.siteAddress), billingAddress: clean(d.billingAddress),
     gstNumber: clean(d.gstNumber), emailWhatsapp: clean(d.emailWhatsapp), salespersonName: clean(d.salespersonName),
-    dateOfOrder: clean(d.dateOfOrder), proposalRefNo: clean(d.proposalRefNo),
+    dateOfOrder: clean(d.dateOfOrder), proposalRefNo: clean(d.proposalRefNo), mapLink: clean(d.mapLink),
   };
   const scope = {
     typeOfProject: clean(sc.typeOfProject), projectSizeArea: clean(sc.projectSizeArea),

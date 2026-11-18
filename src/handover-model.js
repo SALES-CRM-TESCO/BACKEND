@@ -62,6 +62,7 @@ export function handoverModels(prefix = 'ho_') {
       salespersonName: String,
       dateOfOrder: String,       // YYYY-MM-DD
       proposalRefNo: String,
+      mapLink: String,           // Google Maps / location link for the site
     },
     // Section 2 — Scope of Work
     scope: {
