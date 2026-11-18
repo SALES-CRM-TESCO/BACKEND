@@ -102,6 +102,17 @@ export function handoverModels(prefix = 'ho_') {
       assigneeName: String, dueDate: String, updatedAt: Date,
     }],
 
+    // Read-only snapshot of the Execution daily updates (progress reports), written by the
+    // Execution Portal so the Sales team can follow site progress and export it.
+    executionUpdates: [{
+      _id: false,
+      reportId: String, reportDate: String, engineerName: String,
+      projectStatus: String, progressPercent: Number,
+      todayProgress: String, workCompleted: String, tomorrowPlan: String,
+      materialRequired: String, materialStatus: String, issues: String, remarks: String,
+      photoCount: Number, createdAt: Date,
+    }],
+
     createdBy: actorSchema,
     reviewedBy: actorSchema,
     submittedAt: Date,
