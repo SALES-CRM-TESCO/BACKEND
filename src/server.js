@@ -10,6 +10,7 @@ import authRoutes from './routes/auth.js';
 import userRoutes from './routes/users.js';
 import handoverRoutes from './routes/handovers.js';
 import notificationRoutes from './routes/notifications.js';
+import designRequestRoutes from './routes/design-requests.js';
 import { todayStr } from './utils.js';
 
 const app = express();
@@ -24,6 +25,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/handovers', handoverRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/design-requests', designRequestRoutes);
 app.use('/api', (req, res) => res.status(404).json({ error: 'Not found' }));
 
 // Serve the built frontend (Frontend/dist) when present -> one server in production
