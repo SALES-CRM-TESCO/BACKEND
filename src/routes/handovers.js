@@ -8,7 +8,7 @@ import { clean, ah, attachmentAllowed } from '../utils.js';
 import { nextHandoverRef, logActivity, HANDOVER_STATUSES } from '../handover-model.js';
 import { HO } from '../db.js';
 import { config } from '../config.js';
-import { notifyExecution } from '../notify.js';
+import { notifyExecution, notifyProcurement } from '../notify.js';
 
 const r = Router();
 r.use(requireAuth);
@@ -143,8 +143,11 @@ r.post('/:id/submit', ah(async (req, res) => {
   h.submittedAt = new Date();
   h.lastActor = actorOf(req.user);
   await h.save();
-  await logActivity(HO, h, { type: wasChanges ? 'resubmitted' : 'submitted', fromStatus: from, toStatus: 'Submitted', message: wasChanges ? 'Updated handover resubmitted to Execution' : 'Handover submitted to Execution', by: actorOf(req.user) });
+  await logActivity(HO, h, { type: wasChanges ? 'resubmitted' : 'submitted', fromStatus: from, toStatus: 'Submitted', message: wasChanges ? 'Updated handover resubmitted to Execution & Procurement' : 'Handover submitted to Execution & Procurement', by: actorOf(req.user) });
+  // The handover reaches BOTH portals: Execution (existing acceptance workflow) and Procurement
+  // (reference for purchase planning). Same shared record — only the notifications differ.
   await notifyExecution(h, { type: 'handover', title: wasChanges ? `Handover ${h.ref} resubmitted` : `New handover ${h.ref}`, message: `${h.projectName || h.clientName || 'Project'} — from ${req.user.name}` });
+  await notifyProcurement(h, { type: 'handover', title: wasChanges ? `Handover ${h.ref} resubmitted` : `New handover ${h.ref}`, message: `${h.projectName || h.clientName || 'Project'} — from ${req.user.name}` });
   res.json({ handover: h.toJSON() });
 }));
 
